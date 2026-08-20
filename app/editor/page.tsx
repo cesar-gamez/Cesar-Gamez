@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function EditorPage() {
   const scene = await loadScene();
   return <PortfolioCanvas mode="edit" initialScene={scene} />;

@@ -3,6 +3,7 @@ import { loadScene, saveScene } from "@/lib/canvas/load-scene";
 import { normalizeScene, type Scene } from "@/lib/canvas/scene";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const scene = await loadScene();
