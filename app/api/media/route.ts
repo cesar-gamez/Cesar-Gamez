@@ -10,9 +10,7 @@ import path from "path";
 
 export const runtime = "nodejs";
 
-function isUploadedFile(
-  value: FormDataEntryValue | null,
-): value is Blob & { name: string } {
+function isUploadedFile(value: FormDataEntryValue | null): value is File {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -41,10 +39,7 @@ export async function POST(request: Request) {
 
   try {
     if (isSupabaseConfigured()) {
-      const src = await uploadCanvasMedia(
-        file as File,
-        `canvas/${fileName}`,
-      );
+      const src = await uploadCanvasMedia(file, `canvas/${fileName}`);
       return NextResponse.json({ src });
     }
 
