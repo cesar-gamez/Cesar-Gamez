@@ -1,0 +1,33 @@
+{
+  "startView": {
+    "cx": 0,
+    "cy": 0,
+    "zoom": 1
+  },
+  "texts": [
+    {
+      "id": "name",
+      "text": "Cesar Gamez",
+      "x": 13.53515625,
+      "y": -35.76171875,
+      "fontSize": 96,
+      "role": "title"
+    }
+  ],
+  "media": [
+    {
+      "id": "sample-image",
+      "src": "/media/sample.jpg",
+      "x": -520,
+      "y": 80,
+      "width": 420
+    },
+    {
+      "id": "sample-video",
+      "src": "/media/sample.mp4",
+      "x": 100,
+      "y": 80,
+      "width": 420
+    }
+  ]
+}

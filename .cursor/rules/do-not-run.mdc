@@ -1,0 +1,10 @@
+---
+description: Never run commands; the user runs the project
+alwaysApply: true
+---
+
+# Do not run anything
+
+Never execute shell commands, start the dev server, install packages, run builds, tests, or linters, or otherwise run this project.
+
+Write and edit code only. The user runs everything themselves.

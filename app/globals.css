@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --font-helvetica-neue: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --z-canvas-text: 1;
+  --z-canvas-resize: 2;
+  --z-canvas-drop: 3;
+  --z-canvas-chrome: 4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src:
+    local("Helvetica Neue Regular"),
+    local("HelveticaNeue-Regular"),
+    local("Helvetica Neue"),
+    local("HelveticaNeue"),
+    local("Helvetica");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src:
+    local("Helvetica Neue Black"),
+    local("HelveticaNeue-Black"),
+    local("Helvetica Neue Heavy"),
+    local("HelveticaNeue-Heavy");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src:
+    local("Helvetica Neue Bold"),
+    local("HelveticaNeue-Bold"),
+    local("Helvetica Bold"),
+    local("Arial Bold");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src:
+    local("Helvetica Neue Italic"),
+    local("HelveticaNeue-Italic"),
+    local("Helvetica Neue Regular Italic"),
+    local("HelveticaNeue-RegularItalic"),
+    local("Helvetica Italic"),
+    local("Arial Italic");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src:
+    local("Helvetica Neue Bold Italic"),
+    local("HelveticaNeue-BoldItalic"),
+    local("Helvetica Bold Italic"),
+    local("Arial Bold Italic");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src:
+    local("Helvetica Neue Black Italic"),
+    local("HelveticaNeue-BlackItalic"),
+    local("Helvetica Neue Heavy Italic"),
+    local("HelveticaNeue-HeavyItalic");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+.canvas-type {
+  font-family: var(--font-helvetica-neue);
+  font-weight: 900;
+  font-style: normal;
+  font-kerning: normal;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.canvas-type-body {
+  font-family: var(--font-helvetica-neue);
+  font-weight: 400;
+  font-style: normal;
+  font-kerning: normal;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.canvas-selected {
+  outline: 1px solid #000;
+}
+
+.z-canvas-text {
+  z-index: var(--z-canvas-text);
+}
+
+.z-canvas-resize {
+  z-index: var(--z-canvas-resize);
+}
+
+.z-canvas-drop {
+  z-index: var(--z-canvas-drop);
+}
+
+.z-canvas-chrome {
+  z-index: var(--z-canvas-chrome);
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #ffffff;
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
