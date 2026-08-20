@@ -8,6 +8,7 @@
   --z-canvas-resize: 2;
   --z-canvas-drop: 3;
   --z-canvas-chrome: 4;
+  --z-canvas-detail: 5;
 }
 
 @theme inline {
@@ -114,8 +115,26 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.canvas-selected {
-  outline: 1px solid #000;
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+.media-hot-stroke {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 200ms ease-out;
+}
+
+@media (hover: hover) {
+  .media-hot:hover .media-hot-stroke {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-hot-stroke {
+    transition: none;
+  }
 }
 
 .z-canvas-text {
@@ -132,6 +151,10 @@
 
 .z-canvas-chrome {
   z-index: var(--z-canvas-chrome);
+}
+
+.z-canvas-detail {
+  z-index: var(--z-canvas-detail);
 }
 
 html,

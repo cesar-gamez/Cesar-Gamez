@@ -1,86 +1,16 @@
 type RedactionGrade = {
   css: string;
-  locals: string[];
+  file: string;
 };
 
 const REDACTION_GRADES: RedactionGrade[] = [
-  {
-    css: "Redaction",
-    locals: [
-      "Redaction Regular",
-      "Redaction-Regular",
-      "Redacted Regular",
-      "Redacted-Regular",
-      "Redaction",
-      "Redacted",
-    ],
-  },
-  {
-    css: "Redaction 10",
-    locals: [
-      "Redaction 10 Regular",
-      "Redaction10-Regular",
-      "Redacted 10 Regular",
-      "Redacted10-Regular",
-      "Redaction 10",
-      "Redacted 10",
-    ],
-  },
-  {
-    css: "Redaction 20",
-    locals: [
-      "Redaction 20 Regular",
-      "Redaction20-Regular",
-      "Redacted 20 Regular",
-      "Redacted20-Regular",
-      "Redaction 20",
-      "Redacted 20",
-    ],
-  },
-  {
-    css: "Redaction 35",
-    locals: [
-      "Redaction 35 Regular",
-      "Redaction35-Regular",
-      "Redacted 35 Regular",
-      "Redacted35-Regular",
-      "Redaction 35",
-      "Redacted 35",
-    ],
-  },
-  {
-    css: "Redaction 50",
-    locals: [
-      "Redaction 50 Regular",
-      "Redaction50-Regular",
-      "Redacted 50 Regular",
-      "Redacted50-Regular",
-      "Redaction 50",
-      "Redacted 50",
-    ],
-  },
-  {
-    css: "Redaction 70",
-    locals: [
-      "Redaction 70 Regular",
-      "Redaction70-Regular",
-      "Redacted 70 Regular",
-      "Redacted70-Regular",
-      "Redaction 70",
-      "Redacted 70",
-    ],
-  },
-  {
-    css: "Redaction 100",
-    locals: [
-      "Redaction 100 Regular",
-      "Redaction100-Regular",
-      "Redacted 100 Regular",
-      "Redacted100-Regular",
-      "Redaction 100",
-      "Redacted 100",
-    ],
-  },
+  { css: "Redaction", file: "/fonts/redaction-latin-400-normal.woff2" },
+  { css: "Redaction 10", file: "/fonts/redaction-10-latin-400-normal.woff2" },
+  { css: "Redaction 20", file: "/fonts/redaction-20-latin-400-normal.woff2" },
+  { css: "Redaction 35", file: "/fonts/redaction-35-latin-400-normal.woff2" },
+  { css: "Redaction 50", file: "/fonts/redaction-50-latin-400-normal.woff2" },
+  { css: "Redaction 70", file: "/fonts/redaction-70-latin-400-normal.woff2" },
+  { css: "Redaction 100", file: "/fonts/redaction-100-latin-400-normal.woff2" },
 ];
 
 export const REDACTION_CYCLE_MS = 300;
@@ -97,23 +27,21 @@ export function pickNextFont(fonts: string[], current: string): string {
 }
 
 export async function loadInstalledRedactionFonts(): Promise<string[]> {
-  const loaded: string[] = [];
+  const results = await Promise.all(
+    REDACTION_GRADES.map(async (grade) => {
+      const face = new FontFace(grade.css, `url("${grade.file}")`, {
+        style: "normal",
+        weight: "400",
+      });
+      try {
+        await face.load();
+        document.fonts.add(face);
+        return grade.css;
+      } catch {
+        return null;
+      }
+    }),
+  );
 
-  for (const grade of REDACTION_GRADES) {
-    const src = grade.locals.map((name) => `local("${name}")`).join(", ");
-    const face = new FontFace(grade.css, src, {
-      style: "normal",
-      weight: "400",
-    });
-
-    try {
-      await face.load();
-      document.fonts.add(face);
-      loaded.push(grade.css);
-    } catch {
-      continue;
-    }
-  }
-
-  return loaded;
+  return results.filter((name): name is string => Boolean(name));
 }

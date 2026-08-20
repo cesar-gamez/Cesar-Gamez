@@ -5,7 +5,11 @@ import {
   type Camera,
   type WorldBounds,
 } from "@/lib/canvas/camera";
-import type { CanvasMedia } from "@/lib/canvas/media";
+import {
+  DEFAULT_MEDIA_BODY,
+  DEFAULT_MEDIA_TITLE,
+  type CanvasMedia,
+} from "@/lib/canvas/media";
 
 export type TextRole = "title" | "body";
 
@@ -148,6 +152,10 @@ export function normalizeScene(input: unknown): Scene {
             item.height > 0
               ? item.height
               : undefined,
+          title: asString(item?.title, DEFAULT_MEDIA_TITLE),
+          body: asString(item?.body, DEFAULT_MEDIA_BODY),
+          detailEnabled: item?.detailEnabled !== false,
+          muted: item?.muted !== false,
         }))
       : [],
   };

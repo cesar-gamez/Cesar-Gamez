@@ -3,9 +3,13 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { CanvasMediaItem, MediaResizeOverlay } from "@/components/canvas/canvas-media";
 import { EditorBar } from "@/components/canvas/editor-bar";
+import { InquiryCard } from "@/components/canvas/inquiry-card";
+import { MediaDetail } from "@/components/canvas/media-detail";
+import { RecenterToast } from "@/components/canvas/recenter-toast";
 import { SocialBar } from "@/components/canvas/social-bar";
 import {
   GRID_GAP,
+  camerasNear,
   clampCamera,
   panCamera,
   screenFromWorld,
@@ -14,6 +18,8 @@ import {
   type Camera,
 } from "@/lib/canvas/camera";
 import {
+  DEFAULT_MEDIA_BODY,
+  DEFAULT_MEDIA_TITLE,
   isAllowedMediaFile,
   resizeMediaKeepAspect,
   type ResizeCorner,
@@ -96,6 +102,12 @@ function clampFontSize(size: number) {
   return Math.min(400, Math.max(8, size));
 }
 
+function isGestureEvent(
+  event: Event,
+): event is Event & { scale: number; clientX: number; clientY: number } {
+  return "scale" in event && typeof (event as { scale: unknown }).scale === "number";
+}
+
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
   const tag = target.tagName;
@@ -133,6 +145,15 @@ export function PortfolioCanvas({
   const [error, setError] = useState<string | null>(null);
   const [dropActive, setDropActive] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [offStart, setOffStart] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const offStartRef = useRef(false);
+  const setOffStartRef = useRef(setOffStart);
+  const detailIdRef = useRef<string | null>(null);
+  const setDetailIdRef = useRef(setDetailId);
+  setOffStartRef.current = setOffStart;
+  setDetailIdRef.current = setDetailId;
+  detailIdRef.current = detailId;
 
   const editing = mode === "edit";
   sceneRef.current = scene;
@@ -143,6 +164,10 @@ export function PortfolioCanvas({
 
   const selectedText =
     scene.texts.find((item) => item.id === selectedId) ?? null;
+  const selectedMedia =
+    scene.media.find((item) => item.id === selectedId) ?? null;
+  const detailMedia =
+    scene.media.find((item) => item.id === detailId) ?? null;
 
   const markUnsaved = (next: Scene) => {
     sceneRef.current = next;
@@ -183,6 +208,7 @@ export function PortfolioCanvas({
       start: { x: number; y: number; width: number; height: number };
     } | null = null;
     let dragMoved = false;
+    let press: { x: number; y: number; mediaId: string | null } | null = null;
 
     const updateResizeOverlay = () => {
       const overlay = resizeOverlayRef.current;
@@ -258,6 +284,20 @@ export function PortfolioCanvas({
       );
     };
 
+    const startCamera = () => {
+      const home = cameraFromStartView(
+        sceneRef.current.startView,
+        viewport.clientWidth,
+        viewport.clientHeight,
+      );
+      return clampCamera(
+        home,
+        viewport.clientWidth,
+        viewport.clientHeight,
+        sceneContentBounds(sceneRef.current, textLayer, home.zoom),
+      );
+    };
+
     const paint = () => {
       raf = 0;
       applyCamera(viewport, world, textLayer, cameraRef.current);
@@ -267,6 +307,13 @@ export function PortfolioCanvas({
       updateResizeOverlay();
       if (zoomLabelRef.current) {
         zoomLabelRef.current.textContent = `${Math.round(cameraRef.current.zoom * 100)}%`;
+      }
+      if (!editingModeRef.current) {
+        const away = !camerasNear(cameraRef.current, startCamera());
+        if (away !== offStartRef.current) {
+          offStartRef.current = away;
+          setOffStartRef.current(away);
+        }
       }
     };
     paintRef.current = paint;
@@ -356,9 +403,23 @@ export function PortfolioCanvas({
 
       const panGesture = event.button === 1 || spaceHeld || pointers.size === 2;
       const hit =
-        editingModeRef.current && !panGesture
+        !panGesture && event.button === 0 && !spaceHeld
           ? hitTest(event.clientX, event.clientY)
           : null;
+
+      if (!editingModeRef.current) {
+        const mediaItem =
+          hit?.kind === "media"
+            ? sceneRef.current.media.find((entry) => entry.id === hit.id)
+            : null;
+        press = {
+          x: event.clientX,
+          y: event.clientY,
+          mediaId:
+            mediaItem && mediaItem.detailEnabled !== false ? mediaItem.id : null,
+        };
+        dragMoved = false;
+      }
 
       if (
         editingModeRef.current &&
@@ -394,7 +455,7 @@ export function PortfolioCanvas({
         return;
       }
 
-      if (hit && event.button === 0 && !spaceHeld) {
+      if (hit && event.button === 0 && !spaceHeld && editingModeRef.current) {
         setSelectedId(hit.id);
         setEditingId(null);
         moving = {
@@ -432,6 +493,14 @@ export function PortfolioCanvas({
     const onPointerMove = (event: PointerEvent) => {
       if (!pointers.has(event.pointerId)) return;
 
+      if (
+        press &&
+        Math.hypot(event.clientX - press.x, event.clientY - press.y) >
+          DRAG_THRESHOLD
+      ) {
+        dragMoved = true;
+      }
+
       const previous = pointers.get(event.pointerId)!;
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
@@ -467,6 +536,7 @@ export function PortfolioCanvas({
         }
 
         lastPinch = { dist, midX, midY };
+        press = null;
         return;
       }
 
@@ -524,6 +594,7 @@ export function PortfolioCanvas({
       }
 
       if (!panning) return;
+      if (press?.mediaId && !dragMoved) return;
 
       Object.assign(
         cameraRef.current,
@@ -540,6 +611,12 @@ export function PortfolioCanvas({
       pointers.delete(event.pointerId);
       lastPinch = null;
 
+      const openedMedia =
+        !editingModeRef.current && press?.mediaId && !dragMoved
+          ? press.mediaId
+          : null;
+      press = null;
+
       if ((moving || resizing) && dragMoved) {
         markUnsavedRef.current({
           ...sceneRef.current,
@@ -552,6 +629,10 @@ export function PortfolioCanvas({
       resizing = null;
       dragMoved = false;
 
+      if (openedMedia) {
+        setDetailIdRef.current(openedMedia);
+      }
+
       if (pointers.size === 0) {
         panning = false;
         viewport.style.cursor =
@@ -561,6 +642,8 @@ export function PortfolioCanvas({
 
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
+      if (safariPinching) return;
+
       const zoomInput = event.ctrlKey || event.metaKey;
       if (zoomInput) {
         const point = localPoint(event);
@@ -584,12 +667,44 @@ export function PortfolioCanvas({
       schedulePaint();
     };
 
-    const onGesture = (event: Event) => {
+    let safariPinching = false;
+    let pinchStartZoom = 1;
+
+    const onGestureStart = (event: Event) => {
       event.preventDefault();
+      safariPinching = true;
+      pinchStartZoom = cameraRef.current.zoom;
+    };
+
+    const onGestureChange = (event: Event) => {
+      event.preventDefault();
+      if (!isGestureEvent(event)) return;
+      const rect = viewport.getBoundingClientRect();
+      Object.assign(
+        cameraRef.current,
+        zoomAtPoint(
+          cameraRef.current,
+          event.clientX - rect.left,
+          event.clientY - rect.top,
+          pinchStartZoom * event.scale,
+        ),
+      );
+      schedulePaint();
+    };
+
+    const onGestureEnd = (event: Event) => {
+      event.preventDefault();
+      safariPinching = false;
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (isTypingTarget(event.target)) return;
+
+      if (event.key === "Escape" && detailIdRef.current) {
+        event.preventDefault();
+        setDetailIdRef.current(null);
+        return;
+      }
 
       if (event.code === "Space") {
         spaceHeld = true;
@@ -651,9 +766,13 @@ export function PortfolioCanvas({
     viewport.addEventListener("pointerup", endPointer);
     viewport.addEventListener("pointercancel", endPointer);
     viewport.addEventListener("wheel", onWheel, { passive: false });
-    viewport.addEventListener("gesturestart", onGesture);
-    viewport.addEventListener("gesturechange", onGesture);
-    viewport.addEventListener("gestureend", onGesture);
+    const gestureOpts: AddEventListenerOptions = {
+      passive: false,
+      capture: true,
+    };
+    window.addEventListener("gesturestart", onGestureStart, gestureOpts);
+    window.addEventListener("gesturechange", onGestureChange, gestureOpts);
+    window.addEventListener("gestureend", onGestureEnd, gestureOpts);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
 
@@ -672,9 +791,9 @@ export function PortfolioCanvas({
       viewport.removeEventListener("pointerup", endPointer);
       viewport.removeEventListener("pointercancel", endPointer);
       viewport.removeEventListener("wheel", onWheel);
-      viewport.removeEventListener("gesturestart", onGesture);
-      viewport.removeEventListener("gesturechange", onGesture);
-      viewport.removeEventListener("gestureend", onGesture);
+      window.removeEventListener("gesturestart", onGestureStart, gestureOpts);
+      window.removeEventListener("gesturechange", onGestureChange, gestureOpts);
+      window.removeEventListener("gestureend", onGestureEnd, gestureOpts);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
@@ -726,6 +845,10 @@ export function PortfolioCanvas({
             y: worldY - prepared.height / 2 + index * 32,
             width: prepared.width,
             height: prepared.height,
+            title: DEFAULT_MEDIA_TITLE,
+            body: DEFAULT_MEDIA_BODY,
+            detailEnabled: true,
+            muted: true,
           };
         }),
       );
@@ -782,7 +905,7 @@ export function PortfolioCanvas({
       } ${editingId ? "select-text" : "select-none"}`}
       style={{
         backgroundImage:
-          "radial-gradient(circle, rgba(0, 0, 0, 0.1) 1.25px, transparent 1.3px)",
+          "radial-gradient(circle, rgba(0, 0, 0, 0.3) 1.25px, transparent 1.3px)",
         backgroundRepeat: "repeat",
       }}
       onDragOver={(event) => {
@@ -847,6 +970,7 @@ export function PortfolioCanvas({
             key={item.id}
             item={item}
             selected={editing && selectedId === item.id}
+            interactive={!editing && item.detailEnabled}
           />
         ))}
       </div>
@@ -911,6 +1035,7 @@ export function PortfolioCanvas({
             onTool={setTool}
             zoomLabelRef={zoomLabelRef}
             selectedText={selectedText}
+            selectedMedia={selectedMedia}
             onFontSize={(size) => {
               if (!selectedText) return;
               const fontSize = clampFontSize(size);
@@ -963,6 +1088,46 @@ export function PortfolioCanvas({
                 ),
               });
             }}
+            onMediaTitle={(title) => {
+              if (!selectedMedia) return;
+              markUnsaved({
+                ...sceneRef.current,
+                media: sceneRef.current.media.map((item) =>
+                  item.id === selectedMedia.id ? { ...item, title } : item,
+                ),
+              });
+            }}
+            onMediaBody={(body) => {
+              if (!selectedMedia) return;
+              markUnsaved({
+                ...sceneRef.current,
+                media: sceneRef.current.media.map((item) =>
+                  item.id === selectedMedia.id ? { ...item, body } : item,
+                ),
+              });
+            }}
+            onToggleDetail={() => {
+              if (!selectedMedia) return;
+              markUnsaved({
+                ...sceneRef.current,
+                media: sceneRef.current.media.map((item) =>
+                  item.id === selectedMedia.id
+                    ? { ...item, detailEnabled: !item.detailEnabled }
+                    : item,
+                ),
+              });
+            }}
+            onToggleMute={() => {
+              if (!selectedMedia) return;
+              markUnsaved({
+                ...sceneRef.current,
+                media: sceneRef.current.media.map((item) =>
+                  item.id === selectedMedia.id
+                    ? { ...item, muted: !item.muted }
+                    : item,
+                ),
+              });
+            }}
             onPickMedia={(files) => {
               const viewport = viewportRef.current;
               if (!viewport) return;
@@ -994,8 +1159,34 @@ export function PortfolioCanvas({
           />
         </div>
       ) : (
-        <SocialBar />
+        <>
+          <InquiryCard />
+          <RecenterToast
+            visible={offStart}
+            onRecenter={() => {
+              const viewport = viewportRef.current;
+              const textLayer = textsRef.current;
+              if (!viewport || !textLayer) return;
+              const home = cameraFromStartView(
+                sceneRef.current.startView,
+                viewport.clientWidth,
+                viewport.clientHeight,
+              );
+              cameraRef.current = clampCamera(
+                home,
+                viewport.clientWidth,
+                viewport.clientHeight,
+                sceneContentBounds(sceneRef.current, textLayer, home.zoom),
+              );
+              paintRef.current();
+            }}
+          />
+          <SocialBar />
+        </>
       )}
+      {detailMedia ? (
+        <MediaDetail item={detailMedia} onClose={() => setDetailId(null)} />
+      ) : null}
     </div>
   );
 }

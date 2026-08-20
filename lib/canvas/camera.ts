@@ -1,7 +1,6 @@
 export const MIN_ZOOM = 0.35;
 export const MAX_ZOOM = 8;
 export const GRID_GAP = 48;
-export const CONTENT_PADDING = 230;
 
 export type Camera = {
   x: number;
@@ -32,15 +31,6 @@ export function expandBounds(
   };
 }
 
-function padBounds(bounds: WorldBounds, padding: number): WorldBounds {
-  return {
-    left: bounds.left - padding,
-    top: bounds.top - padding,
-    right: bounds.right + padding,
-    bottom: bounds.bottom + padding,
-  };
-}
-
 function clampAxis(
   position: number,
   viewSize: number,
@@ -48,8 +38,9 @@ function clampAxis(
   minWorld: number,
   maxWorld: number,
 ): number {
-  const minPosition = viewSize - maxWorld * zoom;
-  const maxPosition = -minWorld * zoom;
+  const center = viewSize / 2;
+  const minPosition = center - maxWorld * zoom;
+  const maxPosition = center - minWorld * zoom;
   if (minPosition > maxPosition) return (minPosition + maxPosition) / 2;
   return Math.min(maxPosition, Math.max(minPosition, position));
 }
@@ -65,16 +56,22 @@ export function clampCamera(
     return { x: camera.x, y: camera.y, zoom };
   }
 
-  const padded = padBounds(content, CONTENT_PADDING);
   return {
-    x: clampAxis(camera.x, viewWidth, zoom, padded.left, padded.right),
-    y: clampAxis(camera.y, viewHeight, zoom, padded.top, padded.bottom),
+    x: clampAxis(camera.x, viewWidth, zoom, content.left, content.right),
+    y: clampAxis(camera.y, viewHeight, zoom, content.top, content.bottom),
     zoom,
   };
 }
 
 export function clampZoom(zoom: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+}
+
+export function camerasNear(a: Camera, b: Camera): boolean {
+  return (
+    Math.hypot(a.x - b.x, a.y - b.y) < 12 &&
+    Math.abs(a.zoom - b.zoom) < 0.025
+  );
 }
 
 export function panCamera(camera: Camera, dx: number, dy: number): Camera {

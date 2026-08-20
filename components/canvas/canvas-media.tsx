@@ -30,11 +30,13 @@ function MediaFrame({
   item,
   selected,
   natural,
+  interactive,
   children,
 }: {
   item: CanvasMedia;
   selected: boolean;
   natural: { width: number; height: number } | null;
+  interactive: boolean;
   children: ReactNode;
 }) {
   const height = frameHeight(item, natural);
@@ -42,7 +44,9 @@ function MediaFrame({
   return (
     <div
       data-media-id={item.id}
-      className="pointer-events-none absolute overflow-hidden bg-white"
+      className={`absolute overflow-hidden bg-white ${
+        interactive ? "media-hot pointer-events-auto cursor-pointer" : "pointer-events-none"
+      }`}
       style={{
         left: item.x,
         top: item.y,
@@ -54,6 +58,26 @@ function MediaFrame({
       }}
     >
       <div className="size-full">{children}</div>
+      {interactive ? (
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 size-full overflow-visible"
+        >
+          <rect
+            x="0.5"
+            y="0.5"
+            width="99.5%"
+            height="99.5%"
+            rx="7.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+            pathLength="1"
+            className="media-hot-stroke"
+          />
+        </svg>
+      ) : null}
     </div>
   );
 }
@@ -61,9 +85,11 @@ function MediaFrame({
 export function CanvasMediaItem({
   item,
   selected = false,
+  interactive = false,
 }: {
   item: CanvasMedia;
   selected?: boolean;
+  interactive?: boolean;
 }) {
   const [natural, setNatural] = useState<{
     width: number;
@@ -72,7 +98,12 @@ export function CanvasMediaItem({
 
   if (mediaKind(item.src) === "video") {
     return (
-      <MediaFrame item={item} selected={selected} natural={natural}>
+      <MediaFrame
+        item={item}
+        selected={selected}
+        natural={natural}
+        interactive={interactive}
+      >
         <video
           className="block size-full object-cover"
           src={item.src}
@@ -99,7 +130,12 @@ export function CanvasMediaItem({
   }
 
   return (
-    <MediaFrame item={item} selected={selected} natural={natural}>
+    <MediaFrame
+      item={item}
+      selected={selected}
+      natural={natural}
+      interactive={interactive}
+    >
       <img
         className="block size-full object-cover"
         src={item.src}

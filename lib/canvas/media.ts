@@ -13,7 +13,22 @@ export type CanvasMedia = {
   y: number;
   width: number;
   height?: number;
+  title: string;
+  body: string;
+  detailEnabled: boolean;
+  muted: boolean;
 };
+
+export const DEFAULT_MEDIA_TITLE = "Untitled";
+export const DEFAULT_MEDIA_BODY =
+  "This is placeholder copy. Every work currently opens with the same title and text.\n\nWhen individual descriptions are ready, they will sit here: a title at the top, then short paragraphs underneath.";
+
+export function mediaParagraphs(body: string): string[] {
+  return body
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
 
 export type ResizeCorner = "nw" | "ne" | "sw" | "se";
 

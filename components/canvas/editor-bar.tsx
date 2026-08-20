@@ -1,7 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
-import { MEDIA_ACCEPT } from "@/lib/canvas/media";
+import { MEDIA_ACCEPT, mediaKind, type CanvasMedia } from "@/lib/canvas/media";
 import type { CanvasText } from "@/lib/canvas/scene";
 
 type SaveState = "saved" | "unsaved" | "saving" | "error";
@@ -12,11 +12,16 @@ export function EditorBar({
   onTool,
   zoomLabelRef,
   selectedText,
+  selectedMedia,
   onFontSize,
   onBold,
   onItalic,
   onOpacity,
   onTextContent,
+  onMediaTitle,
+  onMediaBody,
+  onToggleDetail,
+  onToggleMute,
   onPickMedia,
   onSetStartView,
   onSave,
@@ -28,11 +33,16 @@ export function EditorBar({
   onTool: (tool: Tool) => void;
   zoomLabelRef: RefObject<HTMLSpanElement | null>;
   selectedText: CanvasText | null;
+  selectedMedia: CanvasMedia | null;
   onFontSize: (size: number) => void;
   onBold: () => void;
   onItalic: () => void;
   onOpacity: (opacity: number) => void;
   onTextContent: (text: string) => void;
+  onMediaTitle: (title: string) => void;
+  onMediaBody: (body: string) => void;
+  onToggleDetail: () => void;
+  onToggleMute: () => void;
   onPickMedia: (files: FileList) => void;
   onSetStartView: () => void;
   onSave: () => void;
@@ -145,6 +155,52 @@ export function EditorBar({
                 onChange={(event) => onTextContent(event.target.value)}
                 className="h-7 w-40 rounded-[8px] border border-black/20 bg-black/5 px-2"
               />
+            ) : null}
+          </>
+        ) : null}
+
+        {selectedMedia ? (
+          <>
+            <span className="mx-1 h-4 w-px bg-black/20" />
+            <input
+              type="text"
+              aria-label="Detail title"
+              value={selectedMedia.title}
+              onChange={(event) => onMediaTitle(event.target.value)}
+              className="h-7 w-36 rounded-[8px] border border-black/20 bg-black/5 px-2"
+            />
+            <textarea
+              aria-label="Detail text"
+              value={selectedMedia.body}
+              onChange={(event) => onMediaBody(event.target.value)}
+              rows={2}
+              className="h-14 w-52 resize-none rounded-[8px] border border-black/20 bg-black/5 px-2 py-1"
+            />
+            <button
+              type="button"
+              aria-pressed={selectedMedia.detailEnabled}
+              onClick={onToggleDetail}
+              className={`rounded-[8px] px-3 py-1.5 ${
+                selectedMedia.detailEnabled
+                  ? "bg-black text-white"
+                  : "hover:bg-black/5"
+              }`}
+            >
+              Detail
+            </button>
+            {mediaKind(selectedMedia.src) === "video" ? (
+              <button
+                type="button"
+                aria-pressed={selectedMedia.muted}
+                onClick={onToggleMute}
+                className={`rounded-[8px] px-3 py-1.5 ${
+                  selectedMedia.muted
+                    ? "bg-black text-white"
+                    : "hover:bg-black/5"
+                }`}
+              >
+                Mute
+              </button>
             ) : null}
           </>
         ) : null}
