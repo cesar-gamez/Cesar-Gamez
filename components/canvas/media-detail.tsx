@@ -40,7 +40,7 @@ export function MediaDetail({
       <div className="flex shrink-0 items-center justify-center px-6 pt-16 pb-4 md:h-full md:min-h-0 md:flex-1 md:p-16">
         {video ? (
           <video
-            className="h-auto w-full max-h-[55dvh] rounded-[8px] object-contain md:max-h-full md:w-auto md:max-w-full"
+            className="h-auto w-full max-h-[55dvh] rounded-none object-contain md:max-h-full md:w-auto md:max-w-full"
             src={item.src}
             autoPlay
             loop
@@ -54,7 +54,7 @@ export function MediaDetail({
           </video>
         ) : (
           <img
-            className="h-auto w-full max-h-[55dvh] rounded-[8px] object-contain md:max-h-full md:w-auto md:max-w-full"
+            className="h-auto w-full max-h-[55dvh] rounded-none object-contain md:max-h-full md:w-auto md:max-w-full"
             src={item.src}
             alt=""
           />

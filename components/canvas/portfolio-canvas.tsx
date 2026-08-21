@@ -261,13 +261,25 @@ export function PortfolioCanvas({
     };
 
     let currentTitleFamily = "";
+    let paintedTitleFamily = "";
     const applyTitleFamily = () => {
       if (!currentTitleFamily) return;
+      textLayer.style.setProperty(
+        "--canvas-title-font",
+        `"${currentTitleFamily}"`,
+      );
+      const familyChanged = paintedTitleFamily !== currentTitleFamily;
+      paintedTitleFamily = currentTitleFamily;
       for (const node of textLayer.querySelectorAll<HTMLElement>(
         '[data-role="title"]',
       )) {
         if (node.dataset.id === editingIdRef.current) continue;
         node.style.fontFamily = `"${currentTitleFamily}"`;
+        if (!familyChanged) continue;
+        const transform = node.style.transform;
+        node.style.transform = `${transform} translateZ(0)`;
+        void node.offsetWidth;
+        node.style.transform = transform;
       }
     };
 

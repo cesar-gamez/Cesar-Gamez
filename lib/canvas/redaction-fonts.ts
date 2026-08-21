@@ -26,22 +26,37 @@ export function pickNextFont(fonts: string[], current: string): string {
   return next;
 }
 
+function fontSource(file: string): string {
+  const href = new URL(file, window.location.origin).href;
+  return `url("${href}") format("woff2")`;
+}
+
+async function loadFace(family: string, file: string, weight: string) {
+  const face = new FontFace(family, fontSource(file), {
+    style: "normal",
+    weight,
+  });
+  document.fonts.add(face);
+  await face.load();
+}
+
 export async function loadInstalledRedactionFonts(): Promise<string[]> {
-  const results = await Promise.all(
+  await Promise.all(
     REDACTION_GRADES.map(async (grade) => {
-      const face = new FontFace(grade.css, `url("${grade.file}")`, {
-        style: "normal",
-        weight: "400",
-      });
       try {
-        await face.load();
-        document.fonts.add(face);
-        return grade.css;
+        await Promise.all([
+          loadFace(grade.css, grade.file, "400"),
+          loadFace(grade.css, grade.file, "900"),
+        ]);
       } catch {
-        return null;
+        try {
+          await document.fonts.load(`900 96px "${grade.css}"`);
+        } catch {
+          /* CSS @font-face still registers the grade. */
+        }
       }
     }),
   );
 
-  return results.filter((name): name is string => Boolean(name));
+  return REDACTION_GRADES.map((grade) => grade.css);
 }
