@@ -14,7 +14,7 @@ const CONSERVE_CSS_PX = 160;
 export function mediaRungs(item: CanvasMedia): MediaRung[] {
   const bySrc = new Map<string, number>();
   bySrc.set(item.src, 3840);
-  for (const rung of item.rungs) {
+  for (const rung of item.rungs ?? []) {
     if (!rung.src) continue;
     const width = Number.isFinite(rung.width) && rung.width > 0 ? rung.width : 3840;
     const previous = bySrc.get(rung.src);

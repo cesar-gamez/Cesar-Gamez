@@ -861,6 +861,7 @@ export function PortfolioCanvas({
             body: DEFAULT_MEDIA_BODY,
             detailEnabled: true,
             muted: true,
+            rungs: [],
           };
         }),
       );

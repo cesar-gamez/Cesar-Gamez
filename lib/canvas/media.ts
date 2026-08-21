@@ -6,6 +6,11 @@ export const MEDIA_ACCEPT =
 
 export type CanvasMediaKind = "image" | "video";
 
+export type MediaRung = {
+  src: string;
+  width: number;
+};
+
 export type CanvasMedia = {
   id: string;
   src: string;
@@ -17,6 +22,7 @@ export type CanvasMedia = {
   body: string;
   detailEnabled: boolean;
   muted: boolean;
+  rungs: MediaRung[];
 };
 
 export const DEFAULT_MEDIA_TITLE = "Untitled";

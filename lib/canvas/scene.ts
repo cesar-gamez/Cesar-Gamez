@@ -156,6 +156,14 @@ export function normalizeScene(input: unknown): Scene {
           body: asString(item?.body, DEFAULT_MEDIA_BODY),
           detailEnabled: item?.detailEnabled !== false,
           muted: item?.muted !== false,
+          rungs: Array.isArray(item?.rungs)
+            ? item.rungs
+                .map((rung) => ({
+                  src: asString(rung?.src, ""),
+                  width: asNumber(rung?.width, 0),
+                }))
+                .filter((rung) => rung.src && rung.width > 0)
+            : [],
         }))
       : [],
   };
