@@ -21,6 +21,7 @@ import {
   DEFAULT_MEDIA_BODY,
   DEFAULT_MEDIA_TITLE,
   isAllowedMediaFile,
+  mediaKind,
   resizeMediaKeepAspect,
   type ResizeCorner,
 } from "@/lib/canvas/media";
@@ -30,6 +31,11 @@ import {
   REDACTION_CYCLE_MS,
 } from "@/lib/canvas/redaction-fonts";
 import { prepareDroppedMedia } from "@/lib/canvas/prepare-media";
+import {
+  capturePosterFromFile,
+  posterFileFromBlob,
+} from "@/lib/canvas/poster";
+import { uploadMediaFile } from "@/lib/canvas/upload-media";
 import {
   cameraFromStartView,
   clampTextOpacity,
@@ -147,6 +153,10 @@ export function PortfolioCanvas({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [offStart, setOffStart] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [posterPreview, setPosterPreview] = useState<{
+    id: string;
+    src: string;
+  } | null>(null);
   const offStartRef = useRef(false);
   const setOffStartRef = useRef(setOffStart);
   const detailIdRef = useRef<string | null>(null);
@@ -837,22 +847,21 @@ export function PortfolioCanvas({
       const uploaded = await Promise.all(
         list.map(async (file, index) => {
           const prepared = await prepareDroppedMedia(file, viewWidth, viewHeight);
-          const form = new FormData();
-          form.append("file", prepared.file);
-          const response = await fetch("/api/media", {
-            method: "POST",
-            body: form,
-          });
-          const payload = (await response.json().catch(() => ({}))) as {
-            src?: string;
-            error?: string;
-          };
-          if (!response.ok || !payload.src) {
-            throw new Error(payload.error ?? "Upload failed");
+          const src = await uploadMediaFile(prepared.file);
+          let poster = "";
+          let posterTime = 0;
+          if (mediaKind(src) === "video") {
+            try {
+              const captured = await capturePosterFromFile(prepared.file, 0);
+              poster = await uploadMediaFile(posterFileFromBlob(captured.blob));
+              posterTime = captured.time;
+            } catch {
+              poster = "";
+            }
           }
           return {
             id: crypto.randomUUID(),
-            src: payload.src,
+            src,
             x: worldX - prepared.width / 2 + index * 32,
             y: worldY - prepared.height / 2 + index * 32,
             width: prepared.width,
@@ -861,6 +870,8 @@ export function PortfolioCanvas({
             body: DEFAULT_MEDIA_BODY,
             detailEnabled: true,
             muted: true,
+            poster,
+            posterTime,
             rungs: [],
           };
         }),
@@ -984,6 +995,9 @@ export function PortfolioCanvas({
             item={item}
             selected={editing && selectedId === item.id}
             interactive={!editing && item.detailEnabled}
+            previewSrc={
+              posterPreview?.id === item.id ? posterPreview.src : undefined
+            }
           />
         ))}
       </div>
@@ -1140,6 +1154,32 @@ export function PortfolioCanvas({
                     : item,
                 ),
               });
+            }}
+            onPosterPreview={(url) => {
+              if (!selectedMedia) return;
+              setPosterPreview({ id: selectedMedia.id, src: url });
+            }}
+            onPosterCommit={(blob, time) => {
+              if (!selectedMedia) return;
+              const id = selectedMedia.id;
+              void uploadMediaFile(posterFileFromBlob(blob))
+                .then((poster) => {
+                  markUnsaved({
+                    ...sceneRef.current,
+                    media: sceneRef.current.media.map((item) =>
+                      item.id === id
+                        ? { ...item, poster, posterTime: time }
+                        : item,
+                    ),
+                  });
+                  setPosterPreview((current) =>
+                    current?.id === id ? null : current,
+                  );
+                })
+                .catch(() => {
+                  setError("Could not save thumbnail");
+                  setSaveState("error");
+                });
             }}
             onPickMedia={(files) => {
               const viewport = viewportRef.current;

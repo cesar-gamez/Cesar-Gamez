@@ -1,6 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
+import { PosterPicker } from "@/components/canvas/poster-picker";
 import { MEDIA_ACCEPT, mediaKind, type CanvasMedia } from "@/lib/canvas/media";
 import type { CanvasText } from "@/lib/canvas/scene";
 
@@ -22,6 +23,8 @@ export function EditorBar({
   onMediaBody,
   onToggleDetail,
   onToggleMute,
+  onPosterPreview,
+  onPosterCommit,
   onPickMedia,
   onSetStartView,
   onSave,
@@ -43,6 +46,8 @@ export function EditorBar({
   onMediaBody: (body: string) => void;
   onToggleDetail: () => void;
   onToggleMute: () => void;
+  onPosterPreview: (url: string, time: number) => void;
+  onPosterCommit: (blob: Blob, time: number) => void;
   onPickMedia: (files: FileList) => void;
   onSetStartView: () => void;
   onSave: () => void;
@@ -189,18 +194,27 @@ export function EditorBar({
               Detail
             </button>
             {mediaKind(selectedMedia.src) === "video" ? (
-              <button
-                type="button"
-                aria-pressed={selectedMedia.muted}
-                onClick={onToggleMute}
-                className={`rounded-[8px] px-3 py-1.5 ${
-                  selectedMedia.muted
-                    ? "bg-black text-white"
-                    : "hover:bg-black/5"
-                }`}
-              >
-                Mute
-              </button>
+              <>
+                <PosterPicker
+                  src={selectedMedia.src}
+                  time={selectedMedia.posterTime}
+                  poster={selectedMedia.poster}
+                  onPreview={onPosterPreview}
+                  onCommit={onPosterCommit}
+                />
+                <button
+                  type="button"
+                  aria-pressed={selectedMedia.muted}
+                  onClick={onToggleMute}
+                  className={`rounded-[8px] px-3 py-1.5 ${
+                    selectedMedia.muted
+                      ? "bg-black text-white"
+                      : "hover:bg-black/5"
+                  }`}
+                >
+                  Mute
+                </button>
+              </>
             ) : null}
           </>
         ) : null}

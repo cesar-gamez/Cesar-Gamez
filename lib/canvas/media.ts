@@ -22,6 +22,8 @@ export type CanvasMedia = {
   body: string;
   detailEnabled: boolean;
   muted: boolean;
+  poster: string;
+  posterTime: number;
   rungs: MediaRung[];
 };
 
@@ -34,6 +36,10 @@ export function mediaParagraphs(body: string): string[] {
     .split(/\n\s*\n/)
     .map((part) => part.trim())
     .filter(Boolean);
+}
+
+export function hasDetailCopy(item: CanvasMedia): boolean {
+  return item.title.trim().length > 0 || mediaParagraphs(item.body).length > 0;
 }
 
 export type ResizeCorner = "nw" | "ne" | "sw" | "se";
@@ -49,6 +55,10 @@ export function mediaKind(src: string): CanvasMediaKind {
   if (VIDEO_EXTENSIONS.has(ext)) return "video";
   if (IMAGE_EXTENSIONS.has(ext)) return "image";
   return "image";
+}
+
+export function canvasThumbSrc(item: CanvasMedia): string {
+  return mediaKind(item.src) === "video" ? item.poster : item.src;
 }
 
 export function imageMimeType(src: string): string {

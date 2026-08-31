@@ -156,6 +156,8 @@ export function normalizeScene(input: unknown): Scene {
           body: asString(item?.body, DEFAULT_MEDIA_BODY),
           detailEnabled: item?.detailEnabled !== false,
           muted: item?.muted !== false,
+          poster: asString(item?.poster, ""),
+          posterTime: Math.max(0, asNumber(item?.posterTime, 0)),
           rungs: Array.isArray(item?.rungs)
             ? item.rungs
                 .map((rung) => ({

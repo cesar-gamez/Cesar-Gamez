@@ -2,8 +2,7 @@
 
 import { useState, type ReactNode, type RefObject } from "react";
 import {
-  mediaKind,
-  videoMimeType,
+  canvasThumbSrc,
   type CanvasMedia,
   type ResizeCorner,
 } from "@/lib/canvas/media";
@@ -86,48 +85,18 @@ export function CanvasMediaItem({
   item,
   selected = false,
   interactive = false,
+  previewSrc,
 }: {
   item: CanvasMedia;
   selected?: boolean;
   interactive?: boolean;
+  previewSrc?: string;
 }) {
   const [natural, setNatural] = useState<{
     width: number;
     height: number;
   } | null>(null);
-
-  if (mediaKind(item.src) === "video") {
-    return (
-      <MediaFrame
-        item={item}
-        selected={selected}
-        natural={natural}
-        interactive={interactive}
-      >
-        <video
-          className="block size-full object-cover"
-          src={item.src}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          disablePictureInPicture
-          onLoadedMetadata={(event) => {
-            const video = event.currentTarget;
-            if (video.videoWidth > 0 && video.videoHeight > 0) {
-              setNatural({
-                width: video.videoWidth,
-                height: video.videoHeight,
-              });
-            }
-          }}
-        >
-          <source src={item.src} type={videoMimeType(item.src)} />
-        </video>
-      </MediaFrame>
-    );
-  }
+  const thumb = previewSrc || canvasThumbSrc(item);
 
   return (
     <MediaFrame
@@ -136,22 +105,26 @@ export function CanvasMediaItem({
       natural={natural}
       interactive={interactive}
     >
-      <img
-        className="block size-full object-cover"
-        src={item.src}
-        alt=""
-        draggable={false}
-        decoding="async"
-        onLoad={(event) => {
-          const image = event.currentTarget;
-          if (image.naturalWidth > 0 && image.naturalHeight > 0) {
-            setNatural({
-              width: image.naturalWidth,
-              height: image.naturalHeight,
-            });
-          }
-        }}
-      />
+      {thumb ? (
+        <img
+          className="block size-full object-cover"
+          src={thumb}
+          alt=""
+          draggable={false}
+          decoding="async"
+          onLoad={(event) => {
+            const image = event.currentTarget;
+            if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+              setNatural({
+                width: image.naturalWidth,
+                height: image.naturalHeight,
+              });
+            }
+          }}
+        />
+      ) : (
+        <div className="size-full bg-black/5" />
+      )}
     </MediaFrame>
   );
 }
