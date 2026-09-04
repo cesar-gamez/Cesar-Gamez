@@ -1,12 +1,17 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CanvasMediaItem, MediaResizeOverlay } from "@/components/canvas/canvas-media";
 import { EditorBar } from "@/components/canvas/editor-bar";
 import { InquiryCard } from "@/components/canvas/inquiry-card";
 import { MediaDetail } from "@/components/canvas/media-detail";
 import { RecenterToast } from "@/components/canvas/recenter-toast";
 import { SocialBar } from "@/components/canvas/social-bar";
+import {
+  detailIdFromLocationSearch,
+  openableDetailId,
+  syncDetailSearchParam,
+} from "@/lib/canvas/detail-url";
 import {
   GRID_GAP,
   camerasNear,
@@ -127,9 +132,11 @@ function isTypingTarget(target: EventTarget | null) {
 export function PortfolioCanvas({
   mode,
   initialScene,
+  initialDetailId = null,
 }: {
   mode: Mode;
   initialScene: Scene;
+  initialDetailId?: string | null;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -152,7 +159,9 @@ export function PortfolioCanvas({
   const [dropActive, setDropActive] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [offStart, setOffStart] = useState(false);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(() =>
+    openableDetailId(initialScene.media, initialDetailId),
+  );
   const [posterPreview, setPosterPreview] = useState<{
     id: string;
     src: string;
@@ -825,6 +834,25 @@ export function PortfolioCanvas({
     paintRef.current();
   }, [scene, selectedId]);
 
+  useEffect(() => {
+    if (editing) return;
+    syncDetailSearchParam(detailId);
+  }, [detailId, editing]);
+
+  useEffect(() => {
+    if (editing) return;
+    const onPopState = () => {
+      setDetailId(
+        openableDetailId(
+          sceneRef.current.media,
+          detailIdFromLocationSearch(window.location.search),
+        ),
+      );
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [editing]);
+
   const addMediaAt = async (
     files: FileList | File[],
     worldX: number,
@@ -1238,7 +1266,11 @@ export function PortfolioCanvas({
         </>
       )}
       {detailMedia ? (
-        <MediaDetail item={detailMedia} onClose={() => setDetailId(null)} />
+        <MediaDetail
+          key={detailMedia.id}
+          item={detailMedia}
+          onClose={() => setDetailId(null)}
+        />
       ) : null}
     </div>
   );
