@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useCachedMediaSrc } from "@/components/canvas/use-cached-media";
 import { absoluteDetailUrl } from "@/lib/canvas/detail-url";
 import {
@@ -9,6 +9,25 @@ import {
   mediaParagraphs,
   type CanvasMedia,
 } from "@/lib/canvas/media";
+
+function prepareDetailVideo(node: HTMLVideoElement, muted: boolean) {
+  node.playsInline = true;
+  node.setAttribute("playsinline", "");
+  node.defaultMuted = muted;
+  node.muted = muted;
+  if (muted) node.setAttribute("muted", "");
+  else node.removeAttribute("muted");
+}
+
+function playDetailVideo(node: HTMLVideoElement, muted: boolean) {
+  prepareDetailVideo(node, muted);
+  try {
+    const playback = node.play();
+    return playback ?? Promise.resolve();
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
 
 function MuteGlyph({ muted }: { muted: boolean }) {
   return (
@@ -62,19 +81,62 @@ export function MediaDetail({
   const cachedSrc = useCachedMediaSrc(item.src, video);
   const videoRef = useRef<HTMLVideoElement>(null);
   const copiedTimer = useRef(0);
+  const mutedRef = useRef(item.muted);
   const [muted, setMuted] = useState(item.muted);
   const [copied, setCopied] = useState(false);
+  mutedRef.current = muted;
+
+  const setVideoNode = useCallback((node: HTMLVideoElement | null) => {
+    videoRef.current = node;
+    if (node) prepareDetailVideo(node, mutedRef.current);
+  }, []);
 
   useEffect(() => {
     return () => window.clearTimeout(copiedTimer.current);
   }, []);
 
+  useLayoutEffect(() => {
+    if (!video || !cachedSrc) return;
+    const node = videoRef.current;
+    if (!node) return;
+
+    let cancelled = false;
+
+    const kickoff = () => {
+      if (cancelled) return;
+      void playDetailVideo(node, mutedRef.current).catch(() => {
+        if (cancelled) return;
+        if (!mutedRef.current) {
+          mutedRef.current = true;
+          setMuted(true);
+        }
+        void playDetailVideo(node, true).catch(() => {});
+      });
+    };
+
+    kickoff();
+    node.addEventListener("loadeddata", kickoff, { once: true });
+    node.addEventListener("canplay", kickoff, { once: true });
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && node.paused) kickoff();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      node.removeEventListener("loadeddata", kickoff);
+      node.removeEventListener("canplay", kickoff);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [video, cachedSrc]);
+
   const toggleMute = () => {
     const next = !muted;
+    mutedRef.current = next;
     const node = videoRef.current;
     if (node) {
-      node.muted = next;
-      if (!next) void node.play();
+      prepareDetailVideo(node, next);
+      void node.play().catch(() => {});
     }
     setMuted(next);
   };
@@ -154,7 +216,7 @@ export function MediaDetail({
         {video ? (
           cachedSrc ? (
             <video
-              ref={videoRef}
+              ref={setVideoNode}
               className={mediaClass}
               src={cachedSrc}
               autoPlay
@@ -167,7 +229,7 @@ export function MediaDetail({
               onEnded={(event) => {
                 const node = event.currentTarget;
                 node.currentTime = 0;
-                void node.play();
+                void playDetailVideo(node, mutedRef.current).catch(() => {});
               }}
             />
           ) : item.poster ? (
