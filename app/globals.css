@@ -273,6 +273,41 @@ video::-webkit-media-controls {
   z-index: var(--z-canvas-detail);
 }
 
+.inquiry-card-mobile {
+  display: none;
+}
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .inquiry-card-shell {
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .inquiry-card-desktop {
+    display: none;
+  }
+
+  .inquiry-card-mobile {
+    display: block;
+  }
+
+  .inquiry-card-mobile summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .social-bar-shell {
+    justify-content: flex-end;
+  }
+
+  .social-bar-link {
+    padding-inline: 0.625rem;
+  }
+
+  .recenter-toast-shell {
+    top: max(1rem, env(safe-area-inset-top));
+    bottom: auto;
+  }
+}
+
 html,
 body {
   height: 100%;

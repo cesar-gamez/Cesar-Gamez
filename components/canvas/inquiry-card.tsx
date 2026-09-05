@@ -22,10 +22,10 @@ export function InquiryCard() {
   return (
     <div
       data-canvas-chrome
-      className="z-canvas-chrome pointer-events-none absolute flex justify-start px-4 max-md:bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] md:bottom-[max(1rem,env(safe-area-inset-bottom))]"
+      className="inquiry-card-shell z-canvas-chrome pointer-events-none absolute flex justify-start px-4 max-md:bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] md:bottom-[max(1rem,env(safe-area-inset-bottom))]"
       style={{ left: "max(0px, env(safe-area-inset-left))" }}
     >
-      <aside className="canvas-type-body pointer-events-auto relative w-[min(17.5rem,calc(100vw-2rem))] rounded-[8px] bg-[#8e8e8e] px-3.5 py-3 text-[12px] leading-snug text-white lowercase">
+      <aside className="inquiry-card-desktop canvas-type-body pointer-events-auto relative w-[min(17.5rem,calc(100vw-2rem))] rounded-[8px] bg-[#8e8e8e] px-3.5 py-3 text-[12px] leading-snug text-white lowercase">
         <p className="text-pretty">
           for more serious inquiries, or if you&apos;d like a deeper view of my
           work, email me at{" "}
@@ -50,6 +50,36 @@ export function InquiryCard() {
           Email copied
         </p>
       </aside>
+      <details className="inquiry-card-mobile canvas-type-body pointer-events-auto relative">
+        <summary className="flex h-8 cursor-pointer list-none items-center rounded-full border border-black/10 bg-white/70 px-3 text-[12px] text-black shadow-sm outline-none backdrop-blur-xl backdrop-saturate-150 transition duration-150 ease-out hover:bg-white focus-visible:bg-white active:scale-95">
+          inquire
+        </summary>
+        <aside className="absolute bottom-[calc(100%+8px)] left-0 w-[min(17.5rem,calc(100vw-2rem))] rounded-[8px] bg-[#8e8e8e] px-3.5 py-3 text-[12px] leading-snug text-white lowercase shadow-sm">
+          <p className="text-pretty">
+            for more serious inquiries, or if you&apos;d like a deeper view of my
+            work, email me at{" "}
+            <a
+              href={`mailto:${EMAIL}`}
+              className="underline underline-offset-2 outline-none transition duration-150 ease-out hover:opacity-70 focus-visible:opacity-70"
+              onClick={(event) => {
+                event.preventDefault();
+                void copyEmail();
+              }}
+            >
+              {EMAIL}
+            </a>
+          </p>
+          <p
+            role="status"
+            className={`mt-2 text-[11px] normal-case transition duration-150 ease-out ${
+              copied ? "opacity-100" : "opacity-0"
+            }`}
+            aria-hidden={!copied}
+          >
+            Email copied
+          </p>
+        </aside>
+      </details>
     </div>
   );
 }

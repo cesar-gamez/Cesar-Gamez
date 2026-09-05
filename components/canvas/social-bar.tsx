@@ -19,7 +19,7 @@ export function SocialBar() {
   return (
     <div
       data-canvas-chrome
-      className="z-canvas-chrome pointer-events-none absolute inset-x-0 flex justify-center px-4"
+      className="social-bar-shell z-canvas-chrome pointer-events-none absolute inset-x-0 flex justify-center px-4"
       style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
     >
       <nav
@@ -39,7 +39,7 @@ export function SocialBar() {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="canvas-type-body rounded-full px-3.5 py-1.5 text-[12px] text-black outline-none transition duration-150 ease-out hover:bg-black/5 focus-visible:bg-black/5 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+                className="social-bar-link canvas-type-body rounded-full px-3.5 py-1.5 text-[12px] text-black outline-none transition duration-150 ease-out hover:bg-black/5 focus-visible:bg-black/5 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 {name}
               </a>

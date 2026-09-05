@@ -10,7 +10,7 @@ export function RecenterToast({
   return (
     <div
       data-canvas-chrome
-      className="z-canvas-chrome pointer-events-none absolute flex justify-end px-4 max-md:bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] md:bottom-[max(1rem,env(safe-area-inset-bottom))]"
+      className="recenter-toast-shell z-canvas-chrome pointer-events-none absolute flex justify-end px-4 max-md:bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] md:bottom-[max(1rem,env(safe-area-inset-bottom))]"
       style={{ right: "max(0px, env(safe-area-inset-right))" }}
     >
       <button
