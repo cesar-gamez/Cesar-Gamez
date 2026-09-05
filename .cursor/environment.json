@@ -1,0 +1,17 @@
+{
+  "name": "cesargamez portfolio canvas",
+  "install": "pnpm install --frozen-lockfile",
+  "terminals": [
+    {
+      "name": "next-dev",
+      "command": "pnpm dev",
+      "description": "Next.js 16 dev server on http://localhost:3000. Serves the portfolio canvas at / and the editor at /editor. Scene and media API routes fall back to local disk (data/scene.json, public/media) when Supabase env vars are absent, so the app is fully usable without secrets."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 3000
+    }
+  ]
+}
