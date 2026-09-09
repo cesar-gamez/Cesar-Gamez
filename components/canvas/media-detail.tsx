@@ -76,15 +76,16 @@ export function MediaDetail({
   onClose: () => void;
 }) {
   const video = mediaKind(item.src) === "video";
+  const soundLocked = item.muted;
   const paragraphs = mediaParagraphs(item.body);
   const copy = hasDetailCopy(item);
   const cachedSrc = useCachedMediaSrc(item.src, video);
   const videoRef = useRef<HTMLVideoElement>(null);
   const copiedTimer = useRef(0);
-  const mutedRef = useRef(item.muted);
-  const [muted, setMuted] = useState(item.muted);
+  const mutedRef = useRef(true);
+  const [muted, setMuted] = useState(true);
   const [copied, setCopied] = useState(false);
-  mutedRef.current = muted;
+  mutedRef.current = soundLocked ? true : muted;
 
   const setVideoNode = useCallback((node: HTMLVideoElement | null) => {
     videoRef.current = node;
@@ -104,7 +105,8 @@ export function MediaDetail({
 
     const kickoff = () => {
       if (cancelled) return;
-      void playDetailVideo(node, mutedRef.current).catch(() => {
+      const startMuted = soundLocked || mutedRef.current;
+      void playDetailVideo(node, startMuted).catch(() => {
         if (cancelled) return;
         if (!mutedRef.current) {
           mutedRef.current = true;
@@ -128,9 +130,10 @@ export function MediaDetail({
       node.removeEventListener("canplay", kickoff);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [video, cachedSrc]);
+  }, [video, cachedSrc, soundLocked]);
 
   const toggleMute = () => {
+    if (soundLocked) return;
     const next = !muted;
     mutedRef.current = next;
     const node = videoRef.current;
@@ -210,8 +213,8 @@ export function MediaDetail({
           copy
             ? "flex shrink-0 items-center justify-center px-6 pt-16 pb-4 md:h-full md:min-h-0 md:flex-1 md:p-16"
             : "flex size-full items-center justify-center p-6 md:p-16"
-        } ${video && cachedSrc ? "cursor-pointer" : ""}`}
-        onClick={video && cachedSrc ? toggleMute : undefined}
+        } ${video && cachedSrc && !soundLocked ? "cursor-pointer" : ""}`}
+        onClick={video && cachedSrc && !soundLocked ? toggleMute : undefined}
       >
         {video ? (
           cachedSrc ? (
@@ -221,7 +224,7 @@ export function MediaDetail({
               src={cachedSrc}
               autoPlay
               loop
-              muted={muted}
+              muted={soundLocked || muted}
               playsInline
               preload="auto"
               disablePictureInPicture
@@ -229,7 +232,9 @@ export function MediaDetail({
               onEnded={(event) => {
                 const node = event.currentTarget;
                 node.currentTime = 0;
-                void playDetailVideo(node, mutedRef.current).catch(() => {});
+                void playDetailVideo(node, soundLocked || mutedRef.current).catch(
+                  () => {},
+                );
               }}
             />
           ) : item.poster ? (
@@ -266,13 +271,19 @@ export function MediaDetail({
       {video ? (
         <button
           type="button"
-          aria-label={muted ? "Unmute" : "Mute"}
+          aria-label={soundLocked ? "Muted" : muted ? "Unmute" : "Mute"}
           aria-pressed={muted}
+          aria-disabled={soundLocked || undefined}
+          tabIndex={soundLocked ? -1 : undefined}
           onClick={(event) => {
             event.stopPropagation();
             toggleMute();
           }}
-          className="absolute z-canvas-detail flex size-8 items-center justify-center rounded-full border border-black/10 bg-white text-black outline-none transition duration-150 ease-out hover:bg-black/5 focus-visible:bg-black/5"
+          className={`absolute z-canvas-detail flex size-8 items-center justify-center rounded-full border border-black/10 bg-white text-black outline-none ${
+            soundLocked
+              ? "cursor-default"
+              : "transition duration-150 ease-out hover:bg-black/5 focus-visible:bg-black/5"
+          }`}
           style={{
             bottom: "max(1rem, env(safe-area-inset-bottom))",
             right: "max(1rem, env(safe-area-inset-right))",
